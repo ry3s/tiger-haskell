@@ -1,2 +1,9 @@
+import           Test.HUnit
+
+import           LexerTest
+
 main :: IO ()
-main = putStrLn "Test suite not yet implemented"
+main = do
+  runTestTT $ TestList
+    [lexerTest]
+  return ()

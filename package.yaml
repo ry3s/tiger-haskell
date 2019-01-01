@@ -9,7 +9,7 @@ copyright:           "2019 ry3s"
 extra-source-files:
 - README.md
 - ChangeLog.md
-
+#- src/Lexer.x
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
 # category:            Web
@@ -21,13 +21,18 @@ description:         Please see the README on GitHub at <https://github.com/ry3s
 
 dependencies:
 - base >= 4.7 && < 5
-- alex
+
 
 library:
   source-dirs: src
+  build-tools:
+    - alex
+  dependencies:
+    - array
+
 
 executables:
-  tiger-haskell-exe:
+  tiger:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -37,8 +42,9 @@ executables:
     dependencies:
     - tiger-haskell
 
+
 tests:
-  tiger-haskell-test:
+  tiger-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:

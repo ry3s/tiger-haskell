@@ -9,6 +9,7 @@ import Lexer
 %monad { Either String } { (>>=) } { return }
 
 %name parse
+
 %token
 while    { While _ }
 for      { For _ }
@@ -53,17 +54,30 @@ nil      { Nil _ }
 string   { StrLiteral _ $$ }
 int      { IntLiteral _ $$ }
 id       { Id _ $$}
-
+{-
+%right of
+%nonassoc do
+%nonassoc else
+%nonassoc ':='
+%left '&' '|'
+%nonassoc '=' '<>' '<' '<=' '>' '>='
+%left '+' '-'
+%left '*' '-'
+%left UMINUS
+-}
 %%
 
 Program:
 Expr  {}
 
 Decs:
+  Decs Dec {}
+| {- empty -} {}
+
+Dec:
   TyDec {}
 | VarDec {}
 | FunDec {}
-| {- empty -} {}
 
 TyDec: type id '=' Ty {}
 
@@ -73,91 +87,127 @@ Ty:
 | array of id     {}
 
 TyFields:
-  id ':' id TyFieldsTail {}
-| {- empty -}        {}
-
-TyFieldsTail:
-  ',' id ':' id TyFieldsTail {}
-| {- empty -}       {}
-
-VarDec:
-  var id ':=' Expr {}
-| var id ':' id ':=' Expr {}
-
-FunDec:
-  function id '(' TyFields ')' '=' Expr {}
-| function id '(' TyFields ')' ':' id '=' Expr {}
-
-LValue:
-  id {}
-| LValue2  {}
-
-LValue2:
-  id '.' id {}
-| LValue2 '.' id {}
-| id '[' Expr ']' {}
-| LValue2 '[' Expr ']' {}
-
-Expr:
-  LValue {}
-| nil    {}
-| '(' ExprSequence ')' {}
-| '(' ')'              {}
-| int               {}
-| string  {}
-| '-' Expr {}
-| id '(' Args ')' {}
-
-| Expr '+' Expr   {}
-| Expr '-' Expr   {}
-| Expr '*' Expr   {}
-| Expr '/' Expr   {}
-
-| Expr '=' Expr   {}
-| Expr '<>' Expr   {}
-| Expr '>' Expr   {}
-| Expr '<' Expr   {}
-| Expr '>=' Expr   {}
-| Expr '<=' Expr   {}
-
-| Expr '&' Expr {}
-| Expr '|' Expr {}
-
-| id '{' Record '}'  {}
-| id '[' Expr ']' of Expr {}
-
-| LValue ':=' Expr {}
-| if Expr then Expr else Expr {}
-| if Expr then Expr {}
-| while Expr do Expr {}
-| for id ':=' Expr to Expr do Expr {}
-| break                   {}
-| let Decs in ExprSequence end {}
-| '(' Expr ')'  {}
-
-ExprSequence:
-  Expr ExprSequenceTail {}
+  TyFieldsRev {}
 | {- empty -} {}
 
-ExprSequenceTail:
-  ';' Expr ExprSequenceTail {}
-| {- empty -}       {}
+TyFieldsRev:
+  TyField      {}
+| TyFieldsRev ',' TyField {}
 
-Args:
-  Expr ArgsTail {}
-| {- empty -}   {}
+TyField:
+  id ':' TypeId {}
 
-ArgsTail:
-  ',' Expr ArgsTail {}
-| {- empty -}     {}
+TypeId:
+  id            {}
 
-Record:
-  id '=' Expr RecordTail {}
-| {- empty -}            {}
+VarDec:
+  var id OptType ':=' Expr {}
 
-RecordTail:
-  ',' id '=' Expr RecordTail {}
-| {- empty -}    {}
+
+OptType:
+  ':' TypeId       {}
+| {- empty -}      {}
+
+FunDec:
+  function id '(' TyFields ')' OptType '=' Expr {}
+
+Expr:
+  Matched        {}
+| Unmatched      {}
+
+Matched:
+  Disjunction           {}
+| LValue ':=' Matched {}
+| id '[' Matched ']' {}
+| if Expr then Matched else Matched {}
+| while Expr do Matched            {}
+| for id ':=' Expr to Expr do Matched {}
+
+Unmatched:
+  LValue ':=' Unmatched    {}
+| id '[' Matched ']' of Unmatched  {}
+| if Expr then Matched else Unmatched  {}
+| if Expr then Matched                  {}
+| while Expr do Unmatched              {}
+| for id ':=' Expr to Expr do Unmatched {}
+
+
+LValue:
+  id LValue1               {}
+
+LValue1:
+  '[' Matched ']' LValue1    {}
+| '.' id LValue1            {}
+| {- empty -}               {}
+
+Disjunction:
+  Disjunction '|' Conjunction      {}
+| Conjunction                      {}
+
+Conjunction:
+  Conjunction '&' Compare {}
+| Compare                 {}
+
+Compare:
+  ArithExpr '=' ArithExpr   {}
+| ArithExpr '<>' ArithExpr   {}
+| ArithExpr '>' ArithExpr   {}
+| ArithExpr '<' ArithExpr   {}
+| ArithExpr '>=' ArithExpr   {}
+| ArithExpr '<=' ArithExpr   {}
+
+ArithExpr:
+  ArithExpr '+' Term        {}
+| ArithExpr '-' Term        {}
+
+Term:
+  Term '*'  PrefExpr    {}
+| Term '/'  PrefExpr    {}
+| PrefExpr              {}
+
+PrefExpr:
+  '-' PrefExpr           {}
+| Factor                 {}
+
+Factor:
+  LValue                {}
+| nil                   {}
+| '(' ExprSequence ')'  {}
+| int                   {}
+| string                {}
+| id '(' CallArgs ')'   {}
+| TypeId '{' Fields '}' {}
+| break                 {}
+| let Decs in ExprSequence end {}
+
+CallArgs:
+  CallArgsRev           {}
+| {- empty -}           {}
+
+CallArgsRev:
+  Expr                  {}
+| CallArgsRev ',' Expr  {}
+
+Fields:
+  FieldsRev             {}
+| {- empty -}           {}
+
+FieldsRev:
+  Field                 {}
+| FieldsRev ',' Field   {}
+
+
+Field:
+ id '=' Expr            {}
+
+ExprSequence:
+  ExprSequenceRev {}
+| {- empty -} {}
+
+ExprSequenceRev:
+  Expr         {}
+| ExprSequenceRev ';' Expr {}
+
 
 {
 parseError :: [Token] -> Either String a

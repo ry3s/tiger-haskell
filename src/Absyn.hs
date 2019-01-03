@@ -2,8 +2,8 @@ module Absyn where
 
 import           Lexer
 
-data Pos = Pos { line :: Int, column :: Int }
-  deriving (Show, Eq)
+-- data Pos = Pos { line :: Int, column :: Int }
+--   deriving (Show, Eq)
 
 type Symbol = String
 

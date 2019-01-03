@@ -2,6 +2,7 @@
 module Parser where
 
 import Lexer
+import qualified Absyn as A
 }
 
 %tokentype { Token }
@@ -68,26 +69,26 @@ id       { Id  $$}
 %%
 
 Program:
-Expr  { undefined }
+Expr  { $1 }
 
 Decs:
-  DecsTail  { undefined }
+  DecsTail  { $1 }
 
 DecsTail:
-  Dec DecsTail { undefined }
-| {- empty -} { undefined }
+  Dec DecsTail { $1 : $2 }
+| {- empty -}  { [] }
 
 Dec:
-  TyDec { undefined }
-| VarDec { undefined }
-| FunDec { undefined }
+  TyDec  { $1 }
+| VarDec { $1 }
+| FunDec { $1 }
 
 TyDec: type id '=' Ty { undefined }
 
 Ty:
-  id { undefined }
+  id               { undefined }
 | '{' TyFields '}' { undefined }
-| array of id     { undefined }
+| array of id      { undefined }
 
 TyFields:
   TyFieldsTail { undefined }
@@ -115,11 +116,11 @@ FunDec:
   function id '(' TyFields ')' OptType '=' Expr { undefined }
 
 Expr:
-  Matched        { undefined }
-| Unmatched      { undefined }
+  Matched        { $1 }
+| Unmatched      { $1 }
 
 Matched:
-  Disjunction           { undefined }
+  Disjunction           { $1 }
 | LValue ':=' Matched { undefined }
 | id '[' Matched ']' { undefined }
 | if Expr then Matched else Matched { undefined }
@@ -144,11 +145,11 @@ LValue1:
 | {- empty -}               { undefined }
 
 Disjunction:
-  Disjunction '|' Conjunction      { undefined }
-| Conjunction                      { undefined }
+  Disjunction '|' Conjunction      { A.IfExp $1 one (Just $3) ((\(Or x) -> x) $2) }
+| Conjunction                      { $1 }
 
 Conjunction:
-  Conjunction '&' Compare { undefined }
+  Conjunction '&' Compare { A.IfExp $1 $3 (Just zero) ((\(And x) -> x) $2) }
 | Compare                 { undefined }
 
 Compare:
@@ -215,4 +216,8 @@ ExprSequenceTail:
 {
 parseError :: [Token] -> Either String a
 parseError tokens = Left $ "parse error" ++ show tokens
+
+zero = A.IntExp 0
+one = A.IntExp 1
+
 }

@@ -68,145 +68,148 @@ id       { Id  $$}
 %%
 
 Program:
-Expr  {}
+Expr  { undefined }
 
 Decs:
-  Decs Dec {}
-| {- empty -} {}
+  DecsTail  { undefined }
+
+DecsTail:
+  Dec DecsTail { undefined }
+| {- empty -} { undefined }
 
 Dec:
-  TyDec {}
-| VarDec {}
-| FunDec {}
+  TyDec { undefined }
+| VarDec { undefined }
+| FunDec { undefined }
 
-TyDec: type id '=' Ty {}
+TyDec: type id '=' Ty { undefined }
 
 Ty:
-  id {}
-| '{' TyFields '}' {}
-| array of id     {}
+  id { undefined }
+| '{' TyFields '}' { undefined }
+| array of id     { undefined }
 
 TyFields:
-  TyFieldsRev {}
-| {- empty -} {}
+  TyFieldsTail { undefined }
+| {- empty -} { undefined }
 
-TyFieldsRev:
-  TyField      {}
-| TyFieldsRev ',' TyField {}
+TyFieldsTail:
+  TyField      { undefined }
+| TyField ',' TyFieldsTail { undefined }
 
 TyField:
-  id ':' TypeId {}
+  id ':' TypeId { undefined }
 
 TypeId:
-  id            {}
+  id            { undefined }
 
 VarDec:
-  var id OptType ':=' Expr {}
+  var id OptType ':=' Expr { undefined }
 
 
 OptType:
-  ':' TypeId       {}
-| {- empty -}      {}
+  ':' TypeId       { undefined }
+| {- empty -}      { undefined }
 
 FunDec:
-  function id '(' TyFields ')' OptType '=' Expr {}
+  function id '(' TyFields ')' OptType '=' Expr { undefined }
 
 Expr:
-  Matched        {}
-| Unmatched      {}
+  Matched        { undefined }
+| Unmatched      { undefined }
 
 Matched:
-  Disjunction           {}
-| LValue ':=' Matched {}
-| id '[' Matched ']' {}
-| if Expr then Matched else Matched {}
-| while Expr do Matched            {}
-| for id ':=' Expr to Expr do Matched {}
+  Disjunction           { undefined }
+| LValue ':=' Matched { undefined }
+| id '[' Matched ']' { undefined }
+| if Expr then Matched else Matched { undefined }
+| while Expr do Matched            { undefined }
+| for id ':=' Expr to Expr do Matched { undefined }
 
 Unmatched:
-  LValue ':=' Unmatched    {}
-| id '[' Matched ']' of Unmatched  {}
-| if Expr then Matched else Unmatched  {}
-| if Expr then Matched                  {}
-| while Expr do Unmatched              {}
-| for id ':=' Expr to Expr do Unmatched {}
+  LValue ':=' Unmatched    { undefined }
+| id '[' Matched ']' of Unmatched  { undefined }
+| if Expr then Matched else Unmatched  { undefined }
+| if Expr then Matched                  { undefined }
+| while Expr do Unmatched              { undefined }
+| for id ':=' Expr to Expr do Unmatched { undefined }
 
 
 LValue:
-  id LValue1               {}
+  id LValue1               { undefined }
 
 LValue1:
-  '[' Matched ']' LValue1    {}
-| '.' id LValue1            {}
-| {- empty -}               {}
+  '[' Matched ']' LValue1    { undefined }
+| '.' id LValue1            { undefined }
+| {- empty -}               { undefined }
 
 Disjunction:
-  Disjunction '|' Conjunction      {}
-| Conjunction                      {}
+  Disjunction '|' Conjunction      { undefined }
+| Conjunction                      { undefined }
 
 Conjunction:
-  Conjunction '&' Compare {}
-| Compare                 {}
+  Conjunction '&' Compare { undefined }
+| Compare                 { undefined }
 
 Compare:
-  ArithExpr '=' ArithExpr   {}
-| ArithExpr '<>' ArithExpr   {}
-| ArithExpr '>' ArithExpr   {}
-| ArithExpr '<' ArithExpr   {}
-| ArithExpr '>=' ArithExpr   {}
-| ArithExpr '<=' ArithExpr   {}
+  ArithExpr '=' ArithExpr   { undefined }
+| ArithExpr '<>' ArithExpr   { undefined }
+| ArithExpr '>' ArithExpr   { undefined }
+| ArithExpr '<' ArithExpr   { undefined }
+| ArithExpr '>=' ArithExpr   { undefined }
+| ArithExpr '<=' ArithExpr   { undefined }
 
 ArithExpr:
-  ArithExpr '+' Term        {}
-| ArithExpr '-' Term        {}
+  ArithExpr '+' Term        { undefined }
+| ArithExpr '-' Term        { undefined }
 
 Term:
-  Term '*'  PrefExpr    {}
-| Term '/'  PrefExpr    {}
-| PrefExpr              {}
+  Term '*'  PrefExpr    { undefined }
+| Term '/'  PrefExpr    { undefined }
+| PrefExpr              { undefined }
 
 PrefExpr:
-  '-' PrefExpr           {}
-| Factor                 {}
+  '-' PrefExpr           { undefined }
+| Factor                 { undefined }
 
 Factor:
-  LValue                {}
-| nil                   {}
-| '(' ExprSequence ')'  {}
-| int                   {}
-| string                {}
-| id '(' CallArgs ')'   {}
-| TypeId '{' Fields '}' {}
-| break                 {}
-| let Decs in ExprSequence end {}
+  LValue                { undefined }
+| nil                   { undefined }
+| '(' ExprSequence ')'  { undefined }
+| int                   { undefined }
+| string                { undefined }
+| id '(' CallArgs ')'   { undefined }
+| TypeId '{' Fields '}' { undefined }
+| break                 { undefined }
+| let Decs in ExprSequence end { undefined }
 
 CallArgs:
-  CallArgsRev           {}
-| {- empty -}           {}
+  CallArgsTail           { undefined }
+| {- empty -}           { undefined }
 
-CallArgsRev:
-  Expr                  {}
-| CallArgsRev ',' Expr  {}
+CallArgsTail:
+  Expr                  { undefined }
+| Expr ',' CallArgsTail  { undefined }
 
 Fields:
-  FieldsRev             {}
-| {- empty -}           {}
+  FieldsTail             { undefined }
+| {- empty -}           { undefined }
 
-FieldsRev:
-  Field                 {}
-| FieldsRev ',' Field   {}
+FieldsTail:
+  Field                 { undefined }
+| Field ',' FieldsTail   { undefined }
 
 
 Field:
- id '=' Expr            {}
+ id '=' Expr            { undefined }
 
 ExprSequence:
-  ExprSequenceRev {}
-| {- empty -} {}
+  ExprSequenceTail { undefined }
+| {- empty -} { undefined }
 
-ExprSequenceRev:
-  Expr         {}
-| ExprSequenceRev ';' Expr {}
+ExprSequenceTail:
+  Expr         { undefined }
+| Expr ';' ExprSequenceTail { undefined }
 
 
 {

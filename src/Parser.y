@@ -83,12 +83,13 @@ Dec:
 | VarDec { $1 }
 | FunDec { $1 }
 
-TyDec: type id '=' Ty { undefined }
+TyDec:
+  type id '=' Ty   { (\(p,s) -> A.TypeDec [(s, $4, p)]) $2 }
 
 Ty:
-  id               { undefined }
-| '{' TyFields '}' { undefined }
-| array of id      { undefined }
+  id               { (\(p,s) -> A.NameTy s p) $1 }
+| '{' TyFields '}' { A.RecordTy $2 }
+| array of id      { (\(p,s) -> A.ArrayTy s p) $3 }
 
 TyFields:
   TyFieldsTail { undefined }
@@ -204,15 +205,15 @@ FieldsTail:
 
 
 Field:
- id '=' Expr            { undefined }
+ id '=' Expr            { (\(p, s) -> (s, $3, p)) $1 }
 
 ExprSequence:
-  ExprSequenceTail { undefined }
-| {- empty -} { undefined }
+  ExprSequenceTail { fnExprSequenceToExp $1 }
+| {- empty -} { fnExprSequenceToExp [] }
 
 ExprSequenceTail:
-  Expr         { undefined }
-| Expr ';' ExprSequenceTail { undefined }
+  Expr         { [$1] }
+| Expr ';' ExprSequenceTail { $1 : $3 }
 
 
 {
@@ -222,4 +223,7 @@ parseError tokens = Left $ "parse error" ++ show tokens
 zero = A.IntExp 0
 one = A.IntExp 1
 
+fnExprSequenceToExp :: [A.Exp] -> A.Exp
+fnExprSequenceToExp [e] = e
+fnExprSequenceToExp es = A.SeqExp [ (e, Pos 0 0) | e <- es ]
 }

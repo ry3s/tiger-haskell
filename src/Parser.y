@@ -122,7 +122,7 @@ Expr:
 Matched:
   Disjunction           { $1 }
 | LValue ':=' Matched { undefined }
-| id '[' Matched ']' { undefined }
+| id '[' Matched ']' of Matched { undefined }
 | if Expr then Matched else Matched { undefined }
 | while Expr do Matched            { undefined }
 | for id ':=' Expr to Expr do Matched { undefined }
@@ -150,55 +150,57 @@ Disjunction:
 
 Conjunction:
   Conjunction '&' Compare { A.IfExp $1 $3 (Just zero) ((\(And x) -> x) $2) }
-| Compare                 { undefined }
+| Compare                 { $1 }
 
 Compare:
-  ArithExpr '=' ArithExpr   { undefined }
-| ArithExpr '<>' ArithExpr   { undefined }
-| ArithExpr '>' ArithExpr   { undefined }
-| ArithExpr '<' ArithExpr   { undefined }
-| ArithExpr '>=' ArithExpr   { undefined }
-| ArithExpr '<=' ArithExpr   { undefined }
+  ArithExpr '=' ArithExpr   { A.OpExp $1 A.EqOp $3 ((\(Eq x) -> x) $2)  }
+| ArithExpr '<>' ArithExpr  { A.OpExp $1 A.NeqOp $3 ((\(Neq x) -> x) $2) }
+| ArithExpr '>' ArithExpr   { A.OpExp $1 A.GtOp $3 ((\(Gt x) -> x) $2) }
+| ArithExpr '<' ArithExpr   { A.OpExp $1 A.LtOp $3 ((\(Lt x) -> x) $2) }
+| ArithExpr '>=' ArithExpr  { A.OpExp $1 A.GeOp $3 ((\(Ge x) -> x) $2) }
+| ArithExpr '<=' ArithExpr  { A.OpExp $1 A.LeOp $3 ((\(Le x) -> x) $2) }
+| ArithExpr                 { $1 }
 
 ArithExpr:
-  ArithExpr '+' Term        { undefined }
-| ArithExpr '-' Term        { undefined }
+  ArithExpr '+' Term        { A.OpExp $1 A.PlusOp $3 ((\(Plus x) -> x) $2) }
+| ArithExpr '-' Term        { A.OpExp $1 A.MinusOp $3 ((\(Minus x) -> x) $2) }
+| Term                      { $1 }
 
 Term:
-  Term '*'  PrefExpr    { undefined }
-| Term '/'  PrefExpr    { undefined }
-| PrefExpr              { undefined }
+  Term '*'  PrefExpr    { A.OpExp $1 A.TimesOp $3 ((\(Times x) -> x) $2) }
+| Term '/'  PrefExpr    { A.OpExp $1 A.DivideOp $3 ((\(Divide x) -> x) $2) }
+| PrefExpr              { $1 }
 
 PrefExpr:
-  '-' PrefExpr           { undefined }
-| Factor                 { undefined }
+  '-' PrefExpr           { A.OpExp zero A.MinusOp $2 ((\(Minus x) -> x) $1) }
+| Factor                 { $1 }
 
 Factor:
-  LValue                { undefined }
-| nil                   { undefined }
-| '(' ExprSequence ')'  { undefined }
-| int                   { undefined }
-| string                { undefined }
-| id '(' CallArgs ')'   { undefined }
-| TypeId '{' Fields '}' { undefined }
-| break                 { undefined }
-| let Decs in ExprSequence end { undefined }
+  LValue                { A.VarExp $1 }
+| nil                   { A.NilExp }
+| '(' ExprSequence ')'  { $2 }
+| int                   { (\(p, s) -> A.IntExp s) $1 }
+| string                { (\(p, s) -> A.StringExp s p) $1 }
+| id '(' CallArgs ')'   { (\(p, s) -> A.CallExp s $3 p) $1 }
+| TypeId '{' Fields '}' { (\(p, s) -> A.RecordExp $3 s p) $1 }
+| break                 { A.BreakExp ((\(Break x) -> x) $1)}
+| let Decs in ExprSequence end { (\(Let p) -> A.LetExp $2 $4 p) $1 }
 
 CallArgs:
-  CallArgsTail           { undefined }
-| {- empty -}           { undefined }
+  CallArgsTail          { $1 }
+| {- empty -}           { [] }
 
 CallArgsTail:
-  Expr                  { undefined }
-| Expr ',' CallArgsTail  { undefined }
+  Expr                  { [$1] }
+| Expr ',' CallArgsTail { $1 : $3 }
 
 Fields:
-  FieldsTail             { undefined }
-| {- empty -}           { undefined }
+  FieldsTail            { $1 }
+| {- empty -}           { [] }
 
 FieldsTail:
-  Field                 { undefined }
-| Field ',' FieldsTail   { undefined }
+  Field                 { [$1] }
+| Field ',' FieldsTail  { $1 : $3 }
 
 
 Field:

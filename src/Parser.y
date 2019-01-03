@@ -92,18 +92,18 @@ Ty:
 | array of id      { (\(p,s) -> A.ArrayTy s p) $3 }
 
 TyFields:
-  TyFieldsTail { undefined }
-| {- empty -} { undefined }
+  TyFieldsTail { $1 }
+| {- empty -}  { [] }
 
 TyFieldsTail:
-  TyField      { undefined }
-| TyField ',' TyFieldsTail { undefined }
+  TyField                  { [$1] }
+| TyField ',' TyFieldsTail { $1 : $3 }
 
 TyField:
-  id ':' TypeId { undefined }
+  id ':' TypeId             { (\(p1, s1) (p3, s3) -> A.Field s1 True s3 p1) $1 $3}
 
 TypeId:
-  id            { undefined }
+  id                        { $1 }
 
 VarDec:
   var id OptType ':=' Expr { undefined }

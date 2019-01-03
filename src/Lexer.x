@@ -59,12 +59,12 @@ nil                   {\p s -> Nil p}
 "|"                   {(\p s -> Or p)}
 ":="                  {(\p s -> Assign p)}
 
-\" \"                 {(\p s -> StrLiteral p $ unquot s)}
-\" ([^\"]|\\ \")* \"  {(\p s -> StrLiteral p $ unquot s)}
+\" \"                 {(\p s -> StrLiteral (p , unquot s))}
+\" ([^\"]|\\ \")* \"  {(\p s -> StrLiteral (p , unquot s))}
 
-$digit+               {(\p s -> IntLiteral p (read s :: Integer))}
+$digit+               {(\p s -> IntLiteral (p ,read s :: Integer))}
 
-@ident                {(\p s -> Id p s)}
+@ident                {(\p s -> Id (p, s))}
 
 {
 
@@ -112,9 +112,9 @@ data Token =
   | Or AlexPosn
   | Assign AlexPosn
   --
-  | StrLiteral AlexPosn String
-  | IntLiteral AlexPosn Integer
-  | Id AlexPosn String
+  | StrLiteral (AlexPosn, String)
+  | IntLiteral (AlexPosn, Integer)
+  | Id (AlexPosn, String)
   | Eof AlexPosn
   deriving (Eq, Show)
 

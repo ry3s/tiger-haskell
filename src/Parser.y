@@ -51,9 +51,9 @@ nil      { Nil _ }
 '&'      { And _ }
 '|'      { Or _ }
 ':='     { Assign _ }
-string   { StrLiteral _ $$ }
-int      { IntLiteral _ $$ }
-id       { Id _ $$}
+string   { StrLiteral  $$ }
+int      { IntLiteral  $$ }
+id       { Id  $$}
 {-
 %right of
 %nonassoc do

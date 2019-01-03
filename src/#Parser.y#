@@ -92,7 +92,7 @@ Ty:
 | array of id      { (\(p,s) -> A.ArrayTy s p) $3 }
 
 TyFields:
-  TyFieldsTail { $1 }
+  TyFieldsTail { $1 } 
 | {- empty -}  { [] }
 
 TyFieldsTail:

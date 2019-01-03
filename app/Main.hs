@@ -3,6 +3,7 @@ module Main where
 import           System.Environment
 
 import           Lexer
+import qualified Parser
 
 main :: IO ()
 main = do
@@ -13,5 +14,10 @@ main = do
       if s == ""
         then return ()
         else do
-        print $ show $ alexScanTokens s
-        loop
+        case Parser.parse $ alexScanTokens s of
+          Right s -> do
+            print $ show $ s
+            loop
+          Left e -> do
+            print e
+            loop
